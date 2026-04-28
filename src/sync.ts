@@ -9,6 +9,7 @@ export interface LogseqBlock {
   content: string;
   page?: { name?: string; originalName?: string };
   refs?: { id: number; "original-name"?: string }[];
+  children?: LogseqBlock[];
 }
 
 export interface LogseqPage {
@@ -34,17 +35,25 @@ export function buildClient(settings: LogseqSettings): MemoryClient | null {
 }
 
 export function flattenBlocks(blocks: LogseqBlock[]): string {
-  return blocks.map((b) => b.content).filter((c) => c && c.length > 0).join("\n");
+  const lines: string[] = [];
+  const walk = (b: LogseqBlock): void => {
+    if (b.content && b.content.length > 0) lines.push(b.content);
+    for (const c of b.children ?? []) walk(c);
+  };
+  for (const b of blocks) walk(b);
+  return lines.join("\n");
 }
 
 export function collectRefs(blocks: LogseqBlock[]): string[] {
   const acc = new Set<string>();
-  for (const b of blocks) {
+  const walk = (b: LogseqBlock): void => {
     for (const r of b.refs ?? []) {
       const name = r["original-name"];
       if (name) acc.add(name);
     }
-  }
+    for (const c of b.children ?? []) walk(c);
+  };
+  for (const b of blocks) walk(b);
   return Array.from(acc);
 }
 
