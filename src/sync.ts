@@ -34,30 +34,37 @@ export function buildClient(settings: LogseqSettings): MemoryClient | null {
   return new LedgerMem({ apiKey: settings.apiKey, workspaceId: settings.workspaceId });
 }
 
+// Iterative DFS — recursion blows the stack on graphs with deeply nested
+// outliner blocks (Logseq supports thousands of levels in a single page).
 export function flattenBlocks(blocks: LogseqBlock[]): string {
   const lines: string[] = [];
-  const walk = (b: LogseqBlock): void => {
+  const stack: LogseqBlock[] = [...blocks].reverse();
+  while (stack.length > 0) {
+    const b = stack.pop() as LogseqBlock;
     if (b.content && b.content.length > 0) lines.push(b.content);
-    for (const c of b.children ?? []) walk(c);
-  };
-  for (const b of blocks) walk(b);
+    const children = b.children ?? [];
+    for (let i = children.length - 1; i >= 0; i--) stack.push(children[i]);
+  }
   return lines.join("\n");
 }
 
 export function collectRefs(blocks: LogseqBlock[]): string[] {
   const acc = new Set<string>();
-  const walk = (b: LogseqBlock): void => {
+  const stack: LogseqBlock[] = [...blocks];
+  while (stack.length > 0) {
+    const b = stack.pop() as LogseqBlock;
     for (const r of b.refs ?? []) {
       const name = r["original-name"];
       if (name) acc.add(name);
     }
-    for (const c of b.children ?? []) walk(c);
-  };
-  for (const b of blocks) walk(b);
+    for (const c of b.children ?? []) stack.push(c);
+  }
   return Array.from(acc);
 }
 
 export async function saveBlock(client: MemoryClient, block: LogseqBlock): Promise<void> {
+  // Empty / whitespace-only blocks add no signal to retrieval — skip them.
+  if (!block.content || block.content.trim().length === 0) return;
   await client.add(block.content, {
     metadata: {
       source: "logseq",
@@ -78,6 +85,8 @@ export async function syncPage(
   const blocks = await editor.getPageBlocksTree(page.name);
   if (blocks.length === 0) return;
   const content = flattenBlocks(blocks);
+  // Skip pages whose blocks are all empty (e.g. journal stubs).
+  if (content.trim().length === 0) return;
   await client.add(content, {
     metadata: {
       source: "logseq",
