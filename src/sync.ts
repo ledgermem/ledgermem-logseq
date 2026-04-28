@@ -41,7 +41,11 @@ export function flattenBlocks(blocks: LogseqBlock[]): string {
   const stack: LogseqBlock[] = [...blocks].reverse();
   while (stack.length > 0) {
     const b = stack.pop() as LogseqBlock;
-    if (b.content && b.content.length > 0) lines.push(b.content);
+    // Trim before testing — Logseq emits blocks containing only whitespace
+    // (property-only stubs, soft-breaks). Pushing those produces all-blank
+    // lines that survive the page-level emptiness check downstream and burn
+    // embedding tokens for zero signal.
+    if (b.content && b.content.trim().length > 0) lines.push(b.content);
     const children = b.children ?? [];
     for (let i = children.length - 1; i >= 0; i--) stack.push(children[i]);
   }
