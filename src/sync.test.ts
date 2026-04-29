@@ -10,8 +10,8 @@ import {
   type MemoryClient,
 } from "./sync.js";
 
-vi.mock("@ledgermem/memory", () => ({
-  LedgerMem: vi.fn().mockImplementation(() => ({ add: vi.fn() })),
+vi.mock("@getmnemo/memory", () => ({
+  Mnemo: vi.fn().mockImplementation(() => ({ add: vi.fn() })),
 }));
 
 const block = (over: Partial<LogseqBlock> = {}): LogseqBlock => ({

@@ -1,4 +1,4 @@
-import { LedgerMem } from "@ledgermem/memory";
+import { Mnemo } from "@getmnemo/memory";
 
 export interface MemoryClient {
   add(content: string, opts: { metadata: Record<string, unknown> }): Promise<unknown>;
@@ -31,7 +31,7 @@ export interface LogseqSettings {
 
 export function buildClient(settings: LogseqSettings): MemoryClient | null {
   if (!settings.apiKey || !settings.workspaceId) return null;
-  return new LedgerMem({ apiKey: settings.apiKey, workspaceId: settings.workspaceId });
+  return new Mnemo({ apiKey: settings.apiKey, workspaceId: settings.workspaceId });
 }
 
 // Iterative DFS — recursion blows the stack on graphs with deeply nested
@@ -116,7 +116,7 @@ export async function backfillGraph(
       ok += 1;
     } catch (err) {
       failed += 1;
-      console.error("[ledgermem] page sync failed", page.name, err);
+      console.error("[getmnemo] page sync failed", page.name, err);
     }
   }
   return { ok, failed };
