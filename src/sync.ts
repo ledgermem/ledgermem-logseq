@@ -1,4 +1,4 @@
-import { Mnemo } from "@getmnemo/memory";
+import { Mnemo } from "@mnemo/memory";
 
 export interface MemoryClient {
   add(content: string, opts: { metadata: Record<string, unknown> }): Promise<unknown>;

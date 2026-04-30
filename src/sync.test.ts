@@ -10,7 +10,7 @@ import {
   type MemoryClient,
 } from "./sync.js";
 
-vi.mock("@getmnemo/memory", () => ({
+vi.mock("@mnemo/memory", () => ({
   Mnemo: vi.fn().mockImplementation(() => ({ add: vi.fn() })),
 }));
 
